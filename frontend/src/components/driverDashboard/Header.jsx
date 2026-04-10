@@ -13,7 +13,7 @@ function Header() {
   const startTrip = async () => {
     try {
       const res = await axios.put(
-        "http://localhost:9000/driver/start-trip",
+        "https://smart-bus-tracking-system.onrender.com/driver/start-trip",
         { busId: dashboard?.driver?.assignedbus?._id },
         {
           headers: {
@@ -33,7 +33,7 @@ function Header() {
   const endTrip = async () => {
     try {
       const res = await axios.put(
-        "http://localhost:9000/driver/end-trip",
+        "https://smart-bus-tracking-system.onrender.com/driver/end-trip",
         { busId: dashboard?.driver?.assignedbus?._id },
         {
           headers: {

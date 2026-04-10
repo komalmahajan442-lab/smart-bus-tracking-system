@@ -101,31 +101,35 @@ return res.json({ message: "Bus Deleted" });
     }
 }
 
-export const createStop=async(req,res)=>{
-    try{
-    const {stopname,location}=req.body;
+export const createStop = async (req, res) => {
+  try {
+    const { stopname, location } = req.body;
 
-    const { latitude, longitude } = location.coordinates;
+    const [longitude, latitude] = location.coordinates;
 
-if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
-  return res.status(400).json({ message: "Invalid coordinates" });
-}
+    if (
+      latitude < -90 || latitude > 90 ||
+      longitude < -180 || longitude > 180
+    ) {
+      return res.status(400).json({ message: "Invalid coordinates" });
+    }
 
-    const stops=new Stop({
-        stopname,
-        location
+    const stops = new Stop({
+      stopname,
+      location
     });
 
     await stops.save();
+
     return res.status(201).json({
-  _id: stops._id,
-  message: "Stop Created"
-});
-   
-}catch(err){
-    return res.status(500).json({message:err.message});
-}
-}
+      _id: stops._id,
+      message: "Stop Created"
+    });
+
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
 
 export const deleteStop=async(req,res)=>{
     try{

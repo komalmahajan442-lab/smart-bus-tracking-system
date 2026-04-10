@@ -21,7 +21,7 @@ function AssignBusToStudent() {
       setLoading(true);
 
       const res = await axios.put(
-        `http://localhost:9000/assign-bus-student/${studentId}`,
+        `https://smart-bus-tracking-system.onrender.com/assign-bus-student/${studentId}`,
         { studentId, busId, pickupstop },
         {
           headers: {

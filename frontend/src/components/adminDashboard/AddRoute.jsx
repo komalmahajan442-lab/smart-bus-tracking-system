@@ -64,7 +64,7 @@ try{
 for(const stop of stops){
 
  const res = await API.post(
-   "http://localhost:9000/createstop",
+   "https://smart-bus-tracking-system.onrender.com/createstop",
    {
     stopname: stop.stopname,
     location: {
