@@ -2,8 +2,8 @@ backend/.env
 
 backend/node_modules/
 frontend/node_modules/
-build/
-dist/
+frontend/build/
+frontend/dist/
 
 *.log
 logs/
