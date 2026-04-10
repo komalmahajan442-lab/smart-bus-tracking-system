@@ -1,0 +1,71 @@
+POST http://localhost:9000/register HTTP/1.1
+Content-Type: application/json
+
+{
+    "name":"adam",
+    "email":"adam@gmail.com",
+    "password":"12345678",
+    "role":"admin",
+    "status":"approved"
+}
+
+###
+
+POST http://localhost:9000/login HTTP/1.1
+Content-Type: application/json
+
+{
+    "email":"adam@gmail.com",
+    "password":"12345678",
+    "role":"admin"
+}
+
+###
+
+POST http://localhost:9000/createstop HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OWM4ZjNkYWI1NTVjYjZiYTIwMWMyZSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3MTg2ODE1MywiZXhwIjoxNzcxOTU0NTUzfQ.MddYwhVlU14AFOAWb1uRMmbXtYY4R3d1EuoT5Y7WoOg
+
+{
+    "stopname":"Shanwara",
+    "location":{
+        "coordinates":[76.25, 21.40]
+    }
+}
+###
+POST http://localhost:9000/createroute HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OWM4ZjNkYWI1NTVjYjZiYTIwMWMyZSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3MTg2ODE1MywiZXhwIjoxNzcxOTU0NTUzfQ.MddYwhVlU14AFOAWb1uRMmbXtYY4R3d1EuoT5Y7WoOg
+
+{
+    "routename": "Burhanpur",
+    "stops":[
+      "699d6eabb631bb45b909ad2f",
+       "699d6ed4b631bb45b909ad31"
+    ]
+    
+   
+}
+
+
+###
+POST http://localhost:9000/createbus HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OWM4ZjNkYWI1NTVjYjZiYTIwMWMyZSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3MTg2ODE1MywiZXhwIjoxNzcxOTU0NTUzfQ.MddYwhVlU14AFOAWb1uRMmbXtYY4R3d1EuoT5Y7WoOg
+
+{
+    "busnumber":1,
+    "route":"699d733c15f45eb41fbe7954",
+    "capacity":"20"
+
+}
+
+###
+GET http://localhost:9000/getbus HTTP/1.1
+Content-Type: application/json 
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OWM4ZjNkYWI1NTVjYjZiYTIwMWMyZSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3MTg2ODE1MywiZXhwIjoxNzcxOTU0NTUzfQ.MddYwhVlU14AFOAWb1uRMmbXtYY4R3d1EuoT5Y7WoOg
+
+###
+GET http://localhost:9000/admin HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5YTJhMjljZTg3MjU4M2ZhMmRlOGVlYiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3MjI2NjgxNCwiZXhwIjoxNzcyMzUzMjE0fQ.8XolA807N-IyKNjEqip2YLUy3RLekrjFnkU7sDyHCNs

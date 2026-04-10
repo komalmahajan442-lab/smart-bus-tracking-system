@@ -1,0 +1,21 @@
+.card {
+  transition: 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #4e73df, #224abe);
+  border: none;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #224abe, #4e73df);
+}
+
+.form-select:focus {
+  border-color: #4e73df;
+  box-shadow: 0 0 5px rgba(78, 115, 223, 0.5);
+}

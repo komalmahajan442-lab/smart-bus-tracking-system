@@ -1,0 +1,10 @@
+.leaflet-container {
+  border-radius: 20px;
+}
+
+.card {
+  transition: 0.3s;
+}
+.card:hover {
+  transform: scale(1.02);
+}
