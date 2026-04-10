@@ -32,10 +32,16 @@ const handleremoveStop = (index) => {
   
 
 const addRoutes = async () => {
+
   if (!Route) return toast.error("Route name required");
 
+  const stopIds = await addStop();
+
+  if(!stopIds || stopIds.length === 0){
+    return toast.error("Stops not created");
+  }
+
   try {
-    const stopIds = await addStop();
 
     const res = await API.post("/createroute", {
       routename: Route,
@@ -54,39 +60,40 @@ const addRoutes = async () => {
   }
 };
 
- 
- 
+  const addStop = async () => {
+  try {
 
-  const addStop=async()=>{
-try{
-   const stopIds=[];
+    const stopIds = [];
 
-for(const stop of stops){
+    for (const stop of stops) {
 
- const res = await API.post(
-   "https://smart-bus-tracking-system.onrender.com/createstop",
-   {
-    stopname: stop.stopname,
-    location: {
-      type: "Point",
-      coordinates: [
-        parseFloat(stop.longitude), // ⚠️ lng first
-        parseFloat(stop.latitude)   // ⚠️ lat second
-      ]
-    }},
+      if(!stop.stopname || !stop.latitude || !stop.longitude){
+        toast.error("Fill all stop fields");
+        return [];
+      }
 
- );
+      const res = await API.post("/createstop", {
+        stopname: stop.stopname,
+        location: {
+          type: "Point",
+          coordinates: [
+            parseFloat(stop.longitude),
+            parseFloat(stop.latitude)
+          ]
+        }
+      });
 
- stopIds.push(res.data._id);
+      stopIds.push(res.data._id);
+    }
 
-}
-return stopIds;
-}catch(err){
-  console.log(err);
-}
+    return stopIds;
+
+  } catch (err) {
+    console.log(err);
+    toast.error("Stop creation failed");
+    return [];
   }
-
-
+};
 
   
 
