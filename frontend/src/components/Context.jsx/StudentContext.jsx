@@ -12,7 +12,7 @@ const [student,setStudent]=useState(null);
 const fetchDashboard = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:9000/student/dashboard",
+        "https://smart-bus-tracking-system.onrender.com/student/dashboard",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,

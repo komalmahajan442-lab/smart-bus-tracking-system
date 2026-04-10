@@ -10,7 +10,7 @@ const [dashboard,setDashboard]=useState(null);
 
 const fetchDashboard=async()=>{
 const res=await axios.get(
-"http://localhost:9000/driver/dashboard",
+"https://smart-bus-tracking-system.onrender.com/driver/dashboard",
 {
 headers:{
 Authorization:`Bearer ${localStorage.getItem("token")}`
@@ -25,7 +25,7 @@ setDashboard(res.data);
 const updateLocation = async ({lat, lng}) => {
   try {
     await axios.put(
-      "http://localhost:9000/driver/updatelocation",
+      "https://smart-bus-tracking-system.onrender.com/driver/updatelocation",
       {
         latitude: lat,
         longitude: lng,
