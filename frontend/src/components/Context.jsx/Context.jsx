@@ -24,7 +24,7 @@ const fetchStudentAssignments = async () => {
     setStudentAssignments(res.data);
     toast.success(res.data.message);
 
-await fetchStudentAssignments(); // 🔥 ADD THIS
+
   } catch (err) {
     console.log(err);
   }
@@ -119,7 +119,7 @@ setStudentsdetail(res.data);
         setBuses,
         setUsers,
         setUserpending,
-
+fetchBuses,
         fetchDashboard,
         fetchRoutes,
         getAssignments,
