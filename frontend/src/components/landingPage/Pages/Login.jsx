@@ -21,7 +21,7 @@ const Login = () => {
 e.preventDefault();
 
 try{
-const res=await axios.post("http://localhost:9000/login",
+const res=await axios.post("https://smart-bus-tracking-system.onrender.com/login",
   {email,password,role:roles}
 );
 console.log(res.data);

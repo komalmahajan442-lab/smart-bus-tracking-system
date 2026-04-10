@@ -23,7 +23,7 @@ const Signup = () => {
 
    const handleSignup=async()=>{
     try{
-    const res=await axios.post("http://localhost:9000/register",{
+    const res=await axios.post("https://smart-bus-tracking-system.onrender.com/register",{
       role,name,password,email,
     });
     console.log(res.data);
