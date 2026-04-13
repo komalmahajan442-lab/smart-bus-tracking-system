@@ -1,8 +1,28 @@
-import React, { useContext, useState, useRef } from 'react';
+import React, { useContext, useState } from "react";
 import "./assroute.css";
-import { MyContext } from '../Context.jsx/Context';
-import { toast } from 'react-toastify';
-import API from './utilsapi';
+import { MyContext } from "../Context.jsx/Context";
+import { toast } from "react-toastify";
+import API from "./utilsapi";
+
+import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+
+function LocationPicker({ index, setStop }) {
+
+  useMapEvents({
+    click(e) {
+      const { lat, lng } = e.latlng;
+
+      setStop(prev => {
+        const updated = [...prev];
+        updated[index].latitude = lat;
+        updated[index].longitude = lng;
+        return updated;
+      });
+    }
+  });
+
+  return null;
+}
 
 function AddRoute() {
 
@@ -13,12 +33,10 @@ function AddRoute() {
     { stopname: "", longitude: "", latitude: "" }
   ]);
 
-  const timeoutRef = useRef({});
-
   const handleStopChange = (index, field, value) => {
-    const updatedStop = [...stops];
-    updatedStop[index][field] = value;
-    setStop(updatedStop);
+    const updated = [...stops];
+    updated[index][field] = value;
+    setStop(updated);
   };
 
   const addstop = (e) => {
@@ -31,80 +49,13 @@ function AddRoute() {
     setStop(prev => prev.filter((_, i) => i !== index));
   };
 
-  // ✅ FINAL SMART GEOCODING (NO ERROR SPAM)
-  const getCoordinates = async (stopName, index) => {
-    try {
-      if (!stopName) return;
-
-      const cleanName = stopName.trim();
-
-      // ❌ skip if incomplete typing
-      if (!cleanName.includes(",")) return;
-
-      // 👉 Primary search
-      let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanName)}&addressdetails=1&countrycodes=in`;
-
-      let res = await fetch(url);
-      let data = await res.json();
-
-      let location = null;
-
-      // ✅ Try Burhanpur match
-      if (data.length > 0) {
-        location = data.find(item =>
-          item.display_name.toLowerCase().includes("burhanpur")
-        );
-      }
-
-      // 🔥 Fallback search (important)
-      if (!location) {
-        const fallbackQuery = cleanName + ", Madhya Pradesh, India";
-
-        const fallbackUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fallbackQuery)}&limit=1`;
-
-        const fallbackRes = await fetch(fallbackUrl);
-        const fallbackData = await fallbackRes.json();
-
-        if (fallbackData.length > 0) {
-          location = fallbackData[0];
-        }
-      }
-
-      // ✅ Set coordinates (no error toast here)
-      if (location) {
-        handleStopChange(index, "latitude", location.lat);
-        handleStopChange(index, "longitude", location.lon);
-      }
-
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  // ✅ Debounce (smooth typing)
-  const handleStopNameChange = (value, index) => {
-    handleStopChange(index, "stopname", value);
-
-    if (timeoutRef.current[index]) {
-      clearTimeout(timeoutRef.current[index]);
-    }
-
-    timeoutRef.current[index] = setTimeout(() => {
-      getCoordinates(value, index);
-    }, 800);
-  };
-
-  // =========================
-
   const addRoutes = async () => {
 
     if (!Route) return toast.error("Route name required");
 
     const stopIds = await addStop();
 
-    if (!stopIds || stopIds.length === 0) {
-      return toast.error("Stops not created");
-    }
+    if (!stopIds.length) return;
 
     try {
       const res = await API.post("/createroute", {
@@ -113,7 +64,6 @@ function AddRoute() {
       });
 
       toast.success(res.data.message);
-
       fetchRoutes();
 
       setStop([{ stopname: "", longitude: "", latitude: "" }]);
@@ -131,9 +81,8 @@ function AddRoute() {
 
       for (const stop of stops) {
 
-        // ✅ FINAL VALIDATION (only here error show hoga)
         if (!stop.stopname || !stop.latitude || !stop.longitude) {
-          toast.error("Please enter valid Stop, City (e.g. Lalbagh, Burhanpur)");
+          toast.error("Please fill all fields or select location on map");
           return [];
         }
 
@@ -164,11 +113,10 @@ function AddRoute() {
     <div className="container mt-5">
       <div className="row g-4">
 
-        {/* Add Route */}
         <div className="col-md-6">
           <div className="p-4 shadow rounded-4 bg-white">
 
-            <h4 className="mb-3">🛣️ Create Route</h4>
+            <h4>🛣️ Create Route</h4>
 
             <input
               type="text"
@@ -178,41 +126,55 @@ function AddRoute() {
               onChange={(e) => setRoute(e.target.value)}
             />
 
-            <h6 className="mb-2">Stops</h6>
-
             {stops.map((stop, index) => (
-              <div key={index} className="border rounded-3 p-3 mb-3">
+              <div key={index} className="mb-4">
 
                 <input
                   type="text"
-                  placeholder="Enter Stop, City (e.g. Lalbagh, Burhanpur)"
+                  placeholder="Enter Stop Name"
                   className="form-control mb-2"
                   value={stop.stopname}
                   onChange={(e) =>
-                    handleStopNameChange(e.target.value, index)
+                    handleStopChange(index, "stopname", e.target.value)
                   }
                 />
 
-                <div className="d-flex gap-2">
+                
+                <MapContainer
+                  center={[21.307, 76.230]} // Burhanpur default
+                  zoom={13}
+                  style={{ height: "250px", width: "100%" }}
+                >
+                  <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+
+                  <LocationPicker index={index} setStop={setStop} />
+
+                  {stop.latitude && stop.longitude && (
+                    <Marker position={[stop.latitude, stop.longitude]} />
+                  )}
+                </MapContainer>
+
+                <div className="d-flex gap-2 mt-2">
                   <input
                     type="text"
-                    className="form-control"
                     value={stop.latitude}
+                    className="form-control"
                     placeholder="Latitude"
                     readOnly
                   />
-
                   <input
                     type="text"
-                    className="form-control"
                     value={stop.longitude}
+                    className="form-control"
                     placeholder="Longitude"
                     readOnly
                   />
                 </div>
 
                 <button
-                  className="btn btn-outline-danger mt-2"
+                  className="btn btn-danger mt-2"
                   onClick={() => handleremoveStop(index)}
                 >
                   Remove Stop
@@ -221,37 +183,29 @@ function AddRoute() {
               </div>
             ))}
 
-            <button className="btn btn-outline-dark me-2" onClick={addstop}>
+            <button className="btn btn-secondary me-2" onClick={addstop}>
               + Add Stop
             </button>
 
-            <button className="btn btn-dark" onClick={addRoutes}>
+            <button className="btn btn-success" onClick={addRoutes}>
               Create Route
             </button>
 
           </div>
         </div>
 
-        {/* Route List */}
+        {/* ROUTES */}
         <div className="col-md-6">
-          <div className="p-4 shadow rounded-4 bg-white">
+          <div className="p-4 shadow bg-white rounded-4">
 
             <h4>📍 All Routes</h4>
 
-            <div style={{ maxHeight: "350px", overflowY: "auto" }}>
-              {routes.length === 0 ? (
-                <p className="text-muted">No routes available</p>
-              ) : (
-                routes.map((route) => (
-                  <div key={route._id} className="border p-3 mb-2 rounded-3">
-                    <h6>{route.routename}</h6>
-                    <small className="text-muted">
-                      Stops: {route.stops?.length || 0}
-                    </small>
-                  </div>
-                ))
-              )}
-            </div>
+            {routes.map(route => (
+              <div key={route._id} className="border p-2 mb-2">
+                <strong>{route.routename}</strong>
+                <div>Stops: {route.stops?.length}</div>
+              </div>
+            ))}
 
           </div>
         </div>
