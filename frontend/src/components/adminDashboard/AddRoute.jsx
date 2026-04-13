@@ -14,12 +14,16 @@ import {
   useMapEvents
 } from "react-leaflet";
 
-function RecenterMap({ lat, lng }) {
-  const map = useMapEvents({});
+import { useMap } from "react-leaflet";
 
-  if (lat && lng) {
-    map.setView([lat, lng], 16);
-  }
+function RecenterMap({ lat, lng }) {
+  const map = useMap();
+
+  React.useEffect(() => {
+    if (lat && lng) {
+      map.setView([Number(lat), Number(lng)], 17);
+    }
+  }, [lat, lng, map]);
 
   return null;
 }
@@ -131,7 +135,7 @@ const timeoutRef = useRef({});
   try {
     if (!name || name.length < 3) return;
 
-    const query = `${name}, India`;
+    const query = `${name}, Madhya Pradesh, India`;
 
     const res = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`
@@ -216,11 +220,11 @@ const timeoutRef = useRef({});
                   {stop.latitude && stop.longitude && (
   <>
     <RecenterMap lat={stop.latitude} lng={stop.longitude} />
-
-    <Marker position={[stop.latitude, stop.longitude]}>
-      <Tooltip>{stop.stopname}</Tooltip>
+<Marker position={[Number(stop.latitude), Number(stop.longitude)]}>
+ <Tooltip>{stop.stopname}</Tooltip>
       <Popup>{stop.stopname}</Popup>
-    </Marker>
+</Marker>
+   
   </>
 )}
 
