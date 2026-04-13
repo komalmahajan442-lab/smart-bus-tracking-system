@@ -395,3 +395,14 @@ export const getStudentAssignments = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+export const deleteUser=async(req,res)=>{
+  try{
+const {id}=req.params;
+
+await User.findByIdAndDelete(id);
+return res.json({message:"User deleted successfully"});
+  }catch(err){
+     res.status(500).json({ message: err.message });
+  }
+}

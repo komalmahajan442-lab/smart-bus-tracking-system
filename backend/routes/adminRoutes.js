@@ -1,6 +1,6 @@
 import Routes from "express";
 
-import { createBus, createRoute, createStop, deleteBus, deleteRoute, deleteStop, getAdminDashboard, getBus, getRoutes, updateRoute,assignedBusToDriver,assignedBusToStudent, getdriver, getStudent, getAssignments, updateUser ,toggleBusStatus, getStudentAssignments} from "../controllers/adminController.js";
+import { createBus, createRoute, createStop, deleteBus, deleteRoute, deleteStop, getAdminDashboard, getBus, getRoutes, updateRoute,assignedBusToDriver,assignedBusToStudent, getdriver, getStudent, getAssignments, updateUser ,toggleBusStatus, getStudentAssignments, deleteUser} from "../controllers/adminController.js";
 import { auth, authorizeRoles} from "../middlewares/AuthMiddleware.js";
 import { approveUser, getUsers, pendingUser, rejectUser } from "../controllers/userController.js";
 
@@ -37,5 +37,6 @@ router.get('/assignments',auth,authorizeRoles('admin'),getAssignments);
 router.put('/updateuser/:id',auth,authorizeRoles('admin'),updateUser);
 router.put("/bus/toggle/:id", auth, authorizeRoles("admin"), toggleBusStatus);
 router.get('/student-assignments',auth,authorizeRoles("admin"),getStudentAssignments);
+router.put('/deleteuser/:id',auth,authorizeRoles('admin'),deleteUser);
 
 export default router;

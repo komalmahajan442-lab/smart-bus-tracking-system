@@ -4,7 +4,7 @@ import API from './utilsapi';
 import { toast } from 'react-toastify';
 
 function Section1() {
-  const { buses, driver, student, users=[], userpending=[], setUsers, setUserpending ,fetchBuses} = useContext(MyContext);
+  const { buses, driver, student, users=[], userpending=[], setUsers, setUserpending ,fetchDashboard} = useContext(MyContext);
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState("dashboard");
 
@@ -23,11 +23,11 @@ function Section1() {
     setUserpending(prev => prev.filter(u => u._id !== id));
   };
 
-  const deleteBus = async (id) => {
-  if (!window.confirm("Are you sure you want to delete this bus?")) return;
+  const deleteUser = async (id) => {
+  if (!window.confirm("Are you sure you want to delete this user?")) return;
 
-  await API.delete(`/deletebus/${id}`);
-  fetchBuses();
+  await API.delete(`/deleteuser/${id}`);
+  fetchDashboard();
 };
 
 
@@ -103,7 +103,7 @@ function Section1() {
                 </td>
 
                  <td>
-    <button className="btn btn-danger btn-sm me-2" onClick={() => deleteBus(u._id)}>
+    <button className="btn btn-danger btn-sm me-2" onClick={() => deleteUser(u._id)}>
       Delete
     </button>
     <button className="btn btn-warning btn-sm">

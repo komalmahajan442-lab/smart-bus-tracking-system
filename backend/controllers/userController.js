@@ -55,6 +55,9 @@ if(!user){
     return res.status(404).json({message:"User not found"});
 }
 
+if(user.status !== "approved"){
+    return res.status(400).json({message:`user is not approved by admin`});
+}
 
 const isMatched=await bcrypt.compare(password,user.password);
 
