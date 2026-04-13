@@ -55,7 +55,7 @@ if(!user){
     return res.status(404).json({message:"User not found"});
 }
 
-if(user.status !== "approved"){
+if(user.status === "pending" || user.status==="rejected"){
     return res.status(400).json({message:`user is not approved by admin`});
 }
 

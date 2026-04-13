@@ -28,6 +28,7 @@ function Section1() {
 
   await API.delete(`/deleteuser/${id}`);
   fetchDashboard();
+  toast.success("user deleted successfully");
 };
 
 

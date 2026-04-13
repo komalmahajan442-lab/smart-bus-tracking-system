@@ -37,6 +37,6 @@ router.get('/assignments',auth,authorizeRoles('admin'),getAssignments);
 router.put('/updateuser/:id',auth,authorizeRoles('admin'),updateUser);
 router.put("/bus/toggle/:id", auth, authorizeRoles("admin"), toggleBusStatus);
 router.get('/student-assignments',auth,authorizeRoles("admin"),getStudentAssignments);
-router.put('/deleteuser/:id',auth,authorizeRoles('admin'),deleteUser);
+router.delete('/deleteuser/:id',auth,authorizeRoles('admin'),deleteUser);
 
 export default router;
