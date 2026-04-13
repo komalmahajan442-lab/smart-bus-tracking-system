@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState,useRef } from "react";
 import "./assroute.css";
 import { MyContext } from "../Context.jsx/Context";
 import { toast } from "react-toastify";
@@ -12,6 +12,16 @@ import {
   Tooltip,
   useMapEvents
 } from "react-leaflet";
+
+function RecenterMap({ lat, lng }) {
+  const map = useMapEvents({});
+
+  if (lat && lng) {
+    map.setView([lat, lng], 16);
+  }
+
+  return null;
+}
 
 function LocationPicker({ index, setStop }) {
 
@@ -115,6 +125,39 @@ function AddRoute() {
       return [];
     }
   };
+const timeoutRef = useRef({});
+  const searchLocation = async (name, index) => {
+  try {
+    if (!name || name.length < 3) return;
+
+    const query = `${name}, India`;
+
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`
+    );
+
+    const data = await res.json();
+
+    if (data.length > 0) {
+      const lat = parseFloat(data[0].lat);
+      const lon = parseFloat(data[0].lon);
+
+      setStop(prev => {
+        const updated = [...prev];
+        updated[index].latitude = lat;
+        updated[index].longitude = lon;
+        return updated;
+      });
+
+    } else {
+      // no error spam
+      console.log("Not found, user can click map");
+    }
+
+  } catch (err) {
+    console.log(err);
+  }
+};
 
   return (
     <div className="container mt-5">
@@ -142,9 +185,20 @@ function AddRoute() {
                   placeholder="Enter Stop Name (e.g. Rastipura)"
                   className="form-control mb-2"
                   value={stop.stopname}
-                  onChange={(e) =>
-                    handleStopChange(index, "stopname", e.target.value)
-                  }
+                  onChange={(e) => {
+  const value = e.target.value;
+
+  handleStopChange(index, "stopname", value);
+
+  // debounce
+  if (timeoutRef.current[index]) {
+    clearTimeout(timeoutRef.current[index]);
+  }
+
+  timeoutRef.current[index] = setTimeout(() => {
+    searchLocation(value, index);
+  }, 700);
+}}
                 />
 
                 {/* MAP */}
@@ -157,23 +211,17 @@ function AddRoute() {
 
                   <LocationPicker index={index} setStop={setStop} />
 
+                  
                   {stop.latitude && stop.longitude && (
-                    <Marker position={[stop.latitude, stop.longitude]}>
+  <>
+    <RecenterMap lat={stop.latitude} lng={stop.longitude} />
 
-                      {/* 🔥 Hover pe naam */}
-                      <Tooltip>
-                        {stop.stopname || "Selected Stop"}
-                      </Tooltip>
-
-                      {/* 🔥 Click pe full details */}
-                      <Popup>
-                        <strong>{stop.stopname}</strong><br />
-                        Lat: {stop.latitude} <br />
-                        Lng: {stop.longitude}
-                      </Popup>
-
-                    </Marker>
-                  )}
+    <Marker position={[stop.latitude, stop.longitude]}>
+      <Tooltip>{stop.stopname}</Tooltip>
+      <Popup>{stop.stopname}</Popup>
+    </Marker>
+  </>
+)}
 
                 </MapContainer>
 
