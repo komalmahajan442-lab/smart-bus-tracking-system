@@ -10,7 +10,8 @@ function Section1() {
 
   // 🔍 FILTER
   const filteredUsers = users.filter(u =>
-    u.name.toLowerCase().includes(search.toLowerCase())
+    u.name.toLowerCase().includes(search.toLowerCase()) &&
+u.role !=="admin"
   );
 
   // ✅ APPROVE
@@ -27,6 +28,7 @@ function Section1() {
   if (!window.confirm("Are you sure you want to delete this user?")) return;
 
   await API.delete(`/deleteuser/${id}`);
+  setUsers(prev => prev.filter(user => user._id !== id));
   fetchDashboard();
   toast.success("user deleted successfully");
 };
