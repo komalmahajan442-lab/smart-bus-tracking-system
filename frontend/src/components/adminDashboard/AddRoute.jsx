@@ -32,60 +32,36 @@ function AddRoute() {
     setStop(prev => prev.filter((_, i) => i !== index));
   };
 
-  // ✅ SMART GEOCODING (3-level fallback)
-  const getCoordinates = async (stopName, index) => {
-    try {
-      if (!stopName) return;
+ const getCoordinates = async (stopName, index) => {
+  try {
+    if (!stopName) return;
 
-      const cleanName = stopName.trim();
+    const cleanName = stopName.trim();
 
-      let data = [];
+    // ✅ assume user gives "Stop, City"
+    const query = `${cleanName}, India`;
 
-      // 🔹 1. Try with full context
-      let query = `${cleanName}, Burhanpur, Madhya Pradesh, India`;
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&addressdetails=1`
+    );
 
-      let res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`
-      );
+    const data = await res.json();
 
-      data = await res.json();
+    if (data.length > 0) {
+      const lat = data[0].lat;
+      const lon = data[0].lon;
 
-      // 🔹 2. Fallback → India
-      if (data.length === 0) {
-        query = `${cleanName}, India`;
-
-        res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`
-        );
-
-        data = await res.json();
-      }
-
-      // 🔹 3. Fallback → only name
-      if (data.length === 0) {
-        res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanName)}&limit=1`
-        );
-
-        data = await res.json();
-      }
-
-      if (data.length > 0) {
-        const lat = data[0].lat;
-        const lon = data[0].lon;
-
-        handleStopChange(index, "latitude", lat);
-        handleStopChange(index, "longitude", lon);
-      } else {
-        console.log("Location not found"); // no spam error
-      }
-
-    } catch (error) {
-      console.log(error);
+      handleStopChange(index, "latitude", lat);
+      handleStopChange(index, "longitude", lon);
+    } else {
+      console.log("Location not found");
     }
-  };
 
-  // ✅ Debounce per stop
+  } catch (error) {
+    console.log(error);
+  }
+};
+
   const handleStopNameChange = (value, index) => {
     handleStopChange(index, "stopname", value);
 
