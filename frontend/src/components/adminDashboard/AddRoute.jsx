@@ -1,4 +1,4 @@
-import React, { useContext, useState,useRef } from "react";
+import React, { useContext, useState, useRef } from "react";
 import "./assroute.css";
 import { MyContext } from "../Context.jsx/Context";
 import { toast } from "react-toastify";
@@ -12,6 +12,18 @@ import {
   Tooltip,
   useMapEvents
 } from "react-leaflet";
+
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+delete L.Icon.Default.prototype._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
 
 function RecenterMap({ lat, lng }) {
   const map = useMapEvents({});
@@ -212,13 +224,13 @@ const timeoutRef = useRef({});
                   <LocationPicker index={index} setStop={setStop} />
 
                   
-                  {stop.latitude && stop.longitude && (
+                 {stop.latitude && stop.longitude && (
   <>
-    <RecenterMap lat={stop.latitude} lng={stop.longitude} />
+    <RecenterMap lat={Number(stop.latitude)} lng={Number(stop.longitude)} />
 
-    <Marker position={[stop.latitude, stop.longitude]}>
-      <Tooltip>{stop.stopname}</Tooltip>
-      <Popup>{stop.stopname}</Popup>
+    <Marker position={[Number(stop.latitude), Number(stop.longitude)]}>
+      <Tooltip>{stop.stopname || "Stop"}</Tooltip>
+      <Popup>{stop.stopname || "Stop"}</Popup>
     </Marker>
   </>
 )}
