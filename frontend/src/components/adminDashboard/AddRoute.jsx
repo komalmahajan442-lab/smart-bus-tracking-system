@@ -31,48 +31,57 @@ function AddRoute() {
     setStop(prev => prev.filter((_, i) => i !== index));
   };
 
-  // ✅ FIXED GEOCODING FUNCTION
+  // ✅ FINAL SMART GEOCODING (NO ERROR SPAM)
   const getCoordinates = async (stopName, index) => {
     try {
       if (!stopName) return;
 
       const cleanName = stopName.trim();
 
-      // format check
-      if (!cleanName.includes(",")) {
-        return; // no error spam while typing
-      }
+      // ❌ skip if incomplete typing
+      if (!cleanName.includes(",")) return;
 
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanName)}&addressdetails=1&countrycodes=in`;
+      // 👉 Primary search
+      let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanName)}&addressdetails=1&countrycodes=in`;
 
-      const res = await fetch(url);
-      const data = await res.json();
+      let res = await fetch(url);
+      let data = await res.json();
 
+      let location = null;
+
+      // ✅ Try Burhanpur match
       if (data.length > 0) {
-
-        // ✅ filter Burhanpur only
-        const validLocation = data.find(item =>
+        location = data.find(item =>
           item.display_name.toLowerCase().includes("burhanpur")
         );
+      }
 
-        if (validLocation) {
-          handleStopChange(index, "latitude", validLocation.lat);
-          handleStopChange(index, "longitude", validLocation.lon);
-        } else {
-          toast.error("Location not in Burhanpur");
+      // 🔥 Fallback search (important)
+      if (!location) {
+        const fallbackQuery = cleanName + ", Madhya Pradesh, India";
+
+        const fallbackUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fallbackQuery)}&limit=1`;
+
+        const fallbackRes = await fetch(fallbackUrl);
+        const fallbackData = await fallbackRes.json();
+
+        if (fallbackData.length > 0) {
+          location = fallbackData[0];
         }
+      }
 
-      } else {
-        toast.error("Location not found");
+      // ✅ Set coordinates (no error toast here)
+      if (location) {
+        handleStopChange(index, "latitude", location.lat);
+        handleStopChange(index, "longitude", location.lon);
       }
 
     } catch (error) {
       console.log(error);
-      toast.error("Error fetching location");
     }
   };
 
-  // ✅ debounce
+  // ✅ Debounce (smooth typing)
   const handleStopNameChange = (value, index) => {
     handleStopChange(index, "stopname", value);
 
@@ -122,8 +131,9 @@ function AddRoute() {
 
       for (const stop of stops) {
 
+        // ✅ FINAL VALIDATION (only here error show hoga)
         if (!stop.stopname || !stop.latitude || !stop.longitude) {
-          toast.error("Fill all stop fields");
+          toast.error("Please enter valid Stop, City (e.g. Lalbagh, Burhanpur)");
           return [];
         }
 
