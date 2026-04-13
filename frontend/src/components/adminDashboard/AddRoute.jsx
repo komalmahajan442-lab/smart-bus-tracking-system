@@ -4,7 +4,14 @@ import { MyContext } from "../Context.jsx/Context";
 import { toast } from "react-toastify";
 import API from "./utilsapi";
 
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  Tooltip,
+  useMapEvents
+} from "react-leaflet";
 
 function LocationPicker({ index, setStop }) {
 
@@ -113,6 +120,7 @@ function AddRoute() {
     <div className="container mt-5">
       <div className="row g-4">
 
+        {/* LEFT SIDE */}
         <div className="col-md-6">
           <div className="p-4 shadow rounded-4 bg-white">
 
@@ -131,7 +139,7 @@ function AddRoute() {
 
                 <input
                   type="text"
-                  placeholder="Enter Stop Name"
+                  placeholder="Enter Stop Name (e.g. Rastipura)"
                   className="form-control mb-2"
                   value={stop.stopname}
                   onChange={(e) =>
@@ -139,21 +147,34 @@ function AddRoute() {
                   }
                 />
 
-                
+                {/* MAP */}
                 <MapContainer
-                  center={[21.307, 76.230]} // Burhanpur default
-                  zoom={13}
+                  center={[21.307, 76.230]}
+                  zoom={16}
                   style={{ height: "250px", width: "100%" }}
                 >
-                  <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  />
+                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
                   <LocationPicker index={index} setStop={setStop} />
 
                   {stop.latitude && stop.longitude && (
-                    <Marker position={[stop.latitude, stop.longitude]} />
+                    <Marker position={[stop.latitude, stop.longitude]}>
+
+                      {/* 🔥 Hover pe naam */}
+                      <Tooltip>
+                        {stop.stopname || "Selected Stop"}
+                      </Tooltip>
+
+                      {/* 🔥 Click pe full details */}
+                      <Popup>
+                        <strong>{stop.stopname}</strong><br />
+                        Lat: {stop.latitude} <br />
+                        Lng: {stop.longitude}
+                      </Popup>
+
+                    </Marker>
                   )}
+
                 </MapContainer>
 
                 <div className="d-flex gap-2 mt-2">
@@ -194,18 +215,22 @@ function AddRoute() {
           </div>
         </div>
 
-        {/* ROUTES */}
+        {/* RIGHT SIDE */}
         <div className="col-md-6">
           <div className="p-4 shadow bg-white rounded-4">
 
             <h4>📍 All Routes</h4>
 
-            {routes.map(route => (
-              <div key={route._id} className="border p-2 mb-2">
-                <strong>{route.routename}</strong>
-                <div>Stops: {route.stops?.length}</div>
-              </div>
-            ))}
+            {routes.length === 0 ? (
+              <p>No routes available</p>
+            ) : (
+              routes.map(route => (
+                <div key={route._id} className="border p-2 mb-2">
+                  <strong>{route.routename}</strong>
+                  <div>Stops: {route.stops?.length}</div>
+                </div>
+              ))
+            )}
 
           </div>
         </div>
