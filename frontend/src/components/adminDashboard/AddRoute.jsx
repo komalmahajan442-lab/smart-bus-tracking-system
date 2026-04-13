@@ -13,7 +13,6 @@ function AddRoute() {
     { stopname: "", longitude: "", latitude: "" }
   ]);
 
-  // ✅ separate debounce for each stop
   const timeoutRef = useRef({});
 
   const handleStopChange = (index, field, value) => {
@@ -32,36 +31,42 @@ function AddRoute() {
     setStop(prev => prev.filter((_, i) => i !== index));
   };
 
- const getCoordinates = async (stopName, index) => {
-  try {
-    if (!stopName) return;
+  // ✅ FINAL GEOCODING (Burhanpur focused)
+  const getCoordinates = async (stopName, index) => {
+    try {
+      if (!stopName) return;
 
-    const cleanName = stopName.trim();
+      const cleanName = stopName.trim();
 
-    // ✅ assume user gives "Stop, City"
-    const query = `${cleanName}, India`;
+      // ✅ enforce format
+      if (!cleanName.includes(",")) {
+        toast.error("Enter Stop, City (e.g. Itwara, Burhanpur)");
+        return;
+      }
 
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&addressdetails=1`
-    );
+      // ✅ Burhanpur bounding box (village level search)
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanName)}&limit=1&countrycodes=in&viewbox=76.10,21.45,76.40,21.20&bounded=1`;
 
-    const data = await res.json();
+      const res = await fetch(url);
+      const data = await res.json();
 
-    if (data.length > 0) {
-      const lat = data[0].lat;
-      const lon = data[0].lon;
+      if (data.length > 0) {
+        const lat = data[0].lat;
+        const lon = data[0].lon;
 
-      handleStopChange(index, "latitude", lat);
-      handleStopChange(index, "longitude", lon);
-    } else {
-      console.log("Location not found");
+        handleStopChange(index, "latitude", lat);
+        handleStopChange(index, "longitude", lon);
+      } else {
+        toast.error("Location not found in Burhanpur area");
+      }
+
+    } catch (error) {
+      console.log(error);
+      toast.error("Error fetching location");
     }
+  };
 
-  } catch (error) {
-    console.log(error);
-  }
-};
-
+  // ✅ Debounce per stop
   const handleStopNameChange = (value, index) => {
     handleStopChange(index, "stopname", value);
 
@@ -73,8 +78,6 @@ function AddRoute() {
       getCoordinates(value, index);
     }, 800);
   };
-
-  // =========================
 
   const addRoutes = async () => {
 
@@ -164,7 +167,7 @@ function AddRoute() {
 
                 <input
                   type="text"
-                  placeholder="Enter Stop (e.g. Itwara, Burhanpur or Railway Station)"
+                  placeholder="Enter Stop, City (e.g. Itwara, Burhanpur)"
                   className="form-control mb-2"
                   value={stop.stopname}
                   onChange={(e) =>
