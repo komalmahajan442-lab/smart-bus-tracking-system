@@ -1,9 +1,8 @@
-import React, { useContext, useState,useRef } from "react";
+import React, { useContext, useState, useRef, useEffect } from "react";
 import "./assroute.css";
 import { MyContext } from "../Context.jsx/Context";
 import { toast } from "react-toastify";
 import API from "./utilsapi";
-
 
 import {
   MapContainer,
@@ -11,15 +10,15 @@ import {
   Marker,
   Popup,
   Tooltip,
+  useMap,
   useMapEvents
 } from "react-leaflet";
 
-import { useMap } from "react-leaflet";
-
+/* ------------------ RECENTER MAP ------------------ */
 function RecenterMap({ lat, lng }) {
   const map = useMap();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (lat && lng) {
       map.setView([Number(lat), Number(lng)], 17);
     }
@@ -28,16 +27,19 @@ function RecenterMap({ lat, lng }) {
   return null;
 }
 
+/* ------------------ MAP CLICK PICKER ------------------ */
 function LocationPicker({ index, setStop }) {
-
   useMapEvents({
     click(e) {
       const { lat, lng } = e.latlng;
 
       setStop(prev => {
         const updated = [...prev];
-        updated[index].latitude = lat;
-        updated[index].longitude = lng;
+        updated[index] = {
+          ...updated[index],
+          latitude: lat,
+          longitude: lng
+        };
         return updated;
       });
     }
@@ -47,7 +49,6 @@ function LocationPicker({ index, setStop }) {
 }
 
 function AddRoute() {
-
   const { routes, fetchRoutes } = useContext(MyContext);
 
   const [Route, setRoute] = useState("");
@@ -55,6 +56,9 @@ function AddRoute() {
     { stopname: "", longitude: "", latitude: "" }
   ]);
 
+  const timeoutRef = useRef({});
+
+  /* ------------------ STOP UPDATE ------------------ */
   const handleStopChange = (index, field, value) => {
     const updated = [...stops];
     updated[index][field] = value;
@@ -71,40 +75,54 @@ function AddRoute() {
     setStop(prev => prev.filter((_, i) => i !== index));
   };
 
-  const addRoutes = async () => {
-
-    if (!Route) return toast.error("Route name required");
-
-    const stopIds = await addStop();
-
-    if (!stopIds.length) return;
-
+  /* ------------------ GEO SEARCH FIX ------------------ */
+  const searchLocation = async (name, index) => {
     try {
-      const res = await API.post("/createroute", {
-        routename: Route,
-        stops: stopIds
-      });
+      if (!name || name.length < 3) return;
 
-      toast.success(res.data.message);
-      fetchRoutes();
+      // ✅ stronger location bias
+      const query = `${name}, Burhanpur, Madhya Pradesh, India`;
 
-      setStop([{ stopname: "", longitude: "", latitude: "" }]);
-      setRoute("");
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
+      );
 
+      const data = await res.json();
+
+      if (data.length > 0) {
+        // ✅ best result pick
+        const best = data[0];
+
+        const lat = parseFloat(best.lat);
+        const lon = parseFloat(best.lon);
+
+        console.log("📍 Selected:", name, lat, lon);
+
+        setStop(prev => {
+          const updated = [...prev];
+
+          updated[index] = {
+            ...updated[index],
+            latitude: lat,
+            longitude: lon
+          };
+
+          return updated;
+        });
+      }
     } catch (err) {
-      toast.error(err.response?.data?.message || err.message);
+      console.log(err);
     }
   };
 
+  /* ------------------ CREATE ROUTE ------------------ */
   const addStop = async () => {
     try {
-
       const stopIds = [];
 
       for (const stop of stops) {
-
-        if (!stop.stopname || !stop.latitude || !stop.longitude) {
-          toast.error("Please fill all fields or select location on map");
+        if (!stop.stopname || stop.latitude === "" || stop.longitude === "") {
+          toast.error("Select location for all stops");
           return [];
         }
 
@@ -123,52 +141,40 @@ function AddRoute() {
       }
 
       return stopIds;
-
     } catch (err) {
       console.log(err);
       toast.error("Stop creation failed");
       return [];
     }
   };
-const timeoutRef = useRef({});
-  const searchLocation = async (name, index) => {
-  try {
-    if (!name || name.length < 3) return;
 
-    const query = `${name}, Madhya Pradesh, India`;
+  const addRoutes = async () => {
+    if (!Route) return toast.error("Route name required");
 
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`
-    );
+    const stopIds = await addStop();
+    if (!stopIds.length) return;
 
-    const data = await res.json();
-
-    if (data.length > 0) {
-      const lat = parseFloat(data[0].lat);
-      const lon = parseFloat(data[0].lon);
-
-      setStop(prev => {
-        const updated = [...prev];
-        updated[index].latitude = lat;
-        updated[index].longitude = lon;
-        return updated;
+    try {
+      const res = await API.post("/createroute", {
+        routename: Route,
+        stops: stopIds
       });
 
-    } else {
-      // no error spam
-      console.log("Not found, user can click map");
-    }
+      toast.success(res.data.message);
+      fetchRoutes();
 
-  } catch (err) {
-    console.log(err);
-  }
-};
+      setStop([{ stopname: "", longitude: "", latitude: "" }]);
+      setRoute("");
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message);
+    }
+  };
 
   return (
     <div className="container mt-5">
       <div className="row g-4">
 
-        {/* LEFT SIDE */}
+        {/* LEFT */}
         <div className="col-md-6">
           <div className="p-4 shadow rounded-4 bg-white">
 
@@ -187,23 +193,20 @@ const timeoutRef = useRef({});
 
                 <input
                   type="text"
-                  placeholder="Enter Stop Name (e.g. Rastipura)"
+                  placeholder="Enter Stop Name"
                   className="form-control mb-2"
                   value={stop.stopname}
                   onChange={(e) => {
-  const value = e.target.value;
+                    const value = e.target.value;
 
-  handleStopChange(index, "stopname", value);
+                    handleStopChange(index, "stopname", value);
 
-  // debounce
-  if (timeoutRef.current[index]) {
-    clearTimeout(timeoutRef.current[index]);
-  }
+                    clearTimeout(timeoutRef.current[index]);
 
-  timeoutRef.current[index] = setTimeout(() => {
-    searchLocation(value, index);
-  }, 700);
-}}
+                    timeoutRef.current[index] = setTimeout(() => {
+                      searchLocation(value, index);
+                    }, 700);
+                  }}
                 />
 
                 {/* MAP */}
@@ -216,35 +219,21 @@ const timeoutRef = useRef({});
 
                   <LocationPicker index={index} setStop={setStop} />
 
-                  
                   {stop.latitude && stop.longitude && (
-  <>
-    <RecenterMap lat={stop.latitude} lng={stop.longitude} />
-<Marker position={[Number(stop.latitude), Number(stop.longitude)]}>
- <Tooltip>{stop.stopname}</Tooltip>
-      <Popup>{stop.stopname}</Popup>
-</Marker>
-   
-  </>
-)}
+                    <>
+                      <RecenterMap lat={stop.latitude} lng={stop.longitude} />
 
+                      <Marker position={[Number(stop.latitude), Number(stop.longitude)]}>
+                        <Tooltip>{stop.stopname}</Tooltip>
+                        <Popup>{stop.stopname}</Popup>
+                      </Marker>
+                    </>
+                  )}
                 </MapContainer>
 
                 <div className="d-flex gap-2 mt-2">
-                  <input
-                    type="text"
-                    value={stop.latitude}
-                    className="form-control"
-                    placeholder="Latitude"
-                    readOnly
-                  />
-                  <input
-                    type="text"
-                    value={stop.longitude}
-                    className="form-control"
-                    placeholder="Longitude"
-                    readOnly
-                  />
+                  <input className="form-control" value={stop.latitude} readOnly />
+                  <input className="form-control" value={stop.longitude} readOnly />
                 </div>
 
                 <button
@@ -268,7 +257,7 @@ const timeoutRef = useRef({});
           </div>
         </div>
 
-        {/* RIGHT SIDE */}
+        {/* RIGHT */}
         <div className="col-md-6">
           <div className="p-4 shadow bg-white rounded-4">
 
@@ -293,4 +282,4 @@ const timeoutRef = useRef({});
   );
 }
 
-export default AddRoute; 
+export default AddRoute;
