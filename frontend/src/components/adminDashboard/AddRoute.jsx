@@ -31,33 +31,39 @@ function AddRoute() {
     setStop(prev => prev.filter((_, i) => i !== index));
   };
 
-  // ✅ FINAL GEOCODING (Burhanpur focused)
+  // ✅ FIXED GEOCODING FUNCTION
   const getCoordinates = async (stopName, index) => {
     try {
       if (!stopName) return;
 
       const cleanName = stopName.trim();
 
-      // ✅ enforce format
+      // format check
       if (!cleanName.includes(",")) {
-        toast.error("Enter Stop, City (e.g. Itwara, Burhanpur)");
-        return;
+        return; // no error spam while typing
       }
 
-      // ✅ Burhanpur bounding box (village level search)
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanName)}&limit=1&countrycodes=in&viewbox=76.10,21.45,76.40,21.20&bounded=1`;
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanName)}&addressdetails=1&countrycodes=in`;
 
       const res = await fetch(url);
       const data = await res.json();
 
       if (data.length > 0) {
-        const lat = data[0].lat;
-        const lon = data[0].lon;
 
-        handleStopChange(index, "latitude", lat);
-        handleStopChange(index, "longitude", lon);
+        // ✅ filter Burhanpur only
+        const validLocation = data.find(item =>
+          item.display_name.toLowerCase().includes("burhanpur")
+        );
+
+        if (validLocation) {
+          handleStopChange(index, "latitude", validLocation.lat);
+          handleStopChange(index, "longitude", validLocation.lon);
+        } else {
+          toast.error("Location not in Burhanpur");
+        }
+
       } else {
-        toast.error("Location not found in Burhanpur area");
+        toast.error("Location not found");
       }
 
     } catch (error) {
@@ -66,7 +72,7 @@ function AddRoute() {
     }
   };
 
-  // ✅ Debounce per stop
+  // ✅ debounce
   const handleStopNameChange = (value, index) => {
     handleStopChange(index, "stopname", value);
 
@@ -78,6 +84,8 @@ function AddRoute() {
       getCoordinates(value, index);
     }, 800);
   };
+
+  // =========================
 
   const addRoutes = async () => {
 
@@ -167,7 +175,7 @@ function AddRoute() {
 
                 <input
                   type="text"
-                  placeholder="Enter Stop, City (e.g. Itwara, Burhanpur)"
+                  placeholder="Enter Stop, City (e.g. Lalbagh, Burhanpur)"
                   className="form-control mb-2"
                   value={stop.stopname}
                   onChange={(e) =>
@@ -178,17 +186,17 @@ function AddRoute() {
                 <div className="d-flex gap-2">
                   <input
                     type="text"
-                    placeholder="Latitude"
                     className="form-control"
                     value={stop.latitude}
+                    placeholder="Latitude"
                     readOnly
                   />
 
                   <input
                     type="text"
-                    placeholder="Longitude"
                     className="form-control"
                     value={stop.longitude}
+                    placeholder="Longitude"
                     readOnly
                   />
                 </div>

@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 
 function AddBus() {
 
-  const { buses, fetchBuses } = useContext(MyContext);
+  const { buses, fetchBuses,setBuses } = useContext(MyContext);
 
   const [busNumber, setBusNumber] = useState("");
   const [capacity, setCapacity] = useState("");
@@ -29,7 +29,7 @@ function AddBus() {
       });
 
       toast.success(res.data.message);
-
+ setBuses(prev => [...prev, res.data.bus]);
       fetchBuses();
 
       setBusNumber("");
