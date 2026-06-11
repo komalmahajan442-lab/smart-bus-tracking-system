@@ -76,18 +76,23 @@ io.on("connection", (socket) => {
 
 });
 
- const start=async()=>{
+const start = async () => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URL, {
+      serverSelectionTimeoutMS: 30000,
+      connectTimeoutMS: 30000,
+    });
+    console.log("Database connected");
 
-    try{
-        await mongoose.connect(process.env.MONGODB_URL);
-        console.log("Database connected");
-    }catch(err){
-        console.log(err);
-    }
+    // ✅ Only start server AFTER DB is confirmed connected
+    server.listen(9000, () => {
+      console.log("App is listening on port 9000");
+    });
 
-    server.listen(9000,()=>{
-        console.log("app is listening on port");
-    })
- }
+  } catch(err) {
+    console.error("❌ Failed to connect to MongoDB:", err.message);
+    process.exit(1); // ← stop the server entirely, don't run without DB
+  }
+}
 
- start();
+start();

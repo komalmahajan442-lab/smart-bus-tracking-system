@@ -55,6 +55,10 @@ if(!user){
     return res.status(404).json({message:"User not found"});
 }
 
+if(user.role!==role){
+    return res.json(403).json({message:"Incorrect role selected"})
+}
+
 if(user.status === "pending" || user.status==="rejected"){
     return res.status(400).json({message:`user is not approved by admin`});
 }
@@ -65,10 +69,12 @@ if(!isMatched){
     return res.status(400).json({message:"Please check your email or password"});
 }
 
-if (user.role === "driver" && !user.assignedbus) {
+if (user.role === "driver") {
+    if(!user.assignedbus){
   return res.status(403).json({
     message: "Driver not assigned to any bus"
   });
+}
 }
 
 const token=jwt.sign(
@@ -79,6 +85,7 @@ const token=jwt.sign(
 
 return res.status(200).json({token,message:"Login successfull",user:user});
     }catch(err){
+        console.error("full Error", err);
         return res.status(500).json({message:err.message});
     }
 }
