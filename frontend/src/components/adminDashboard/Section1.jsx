@@ -47,24 +47,28 @@ u.role !=="admin"
       {/* 📊 STATS */}
       <div className="row text-center mb-4">
         {[
-          { title: "Buses", value: buses.length, icon: "🚌" },
-          { title: "Drivers", value: driver.length, icon: "👨‍✈️" },
-          { title: "Students", value: student.length, icon: "🎓" },
-          { title: "Pending", value: userpending.length, icon: "⏳" }
-        ].map((item, i) => (
-          <div className="col-md-3" key={i}>
-            <div className="card shadow border-0 p-3 rounded-4">
-              <h3>{item.icon}</h3>
-              <h5>{item.title}</h5>
-              <h4>{item.value}</h4>
-            </div>
-          </div>
-        ))}
+  { title: "Buses", value: buses.length, icon: "🚌", tab: "buses" },
+  { title: "Drivers", value: driver.length, icon: "👨‍✈️", tab: "drivers" },
+  { title: "Students", value: student.length, icon: "🎓", tab: "students" },
+  { title: "Pending", value: userpending.length, icon: "⏳", tab: "pending" }
+].map((item, i) => (
+  <div className="col-md-3" key={i}>
+    <div
+      className="card shadow border-0 p-3 rounded-4"
+      style={{ cursor: "pointer" }}
+      onClick={() => setTab(item.tab)}
+    >
+      <h3>{item.icon}</h3>
+      <h5>{item.title}</h5>
+      <h4>{item.value}</h4>
+    </div>
+  </div>
+))}
       </div>
 
       {/* 🔘 TABS */}
       <div className="d-flex gap-2 mb-3">
-        {["dashboard", "users", "pending"].map(t => (
+        {["dashboard", "users", "drivers", "students", "buses", "pending"].map(t => (
           <button
             key={t}
             className={`btn ${tab === t ? "btn-dark" : "btn-outline-dark"}`}
@@ -118,6 +122,62 @@ u.role !=="admin"
           </tbody>
         </table>
       )}
+
+      {tab === "drivers" && (
+  <table className="table table-hover">
+    <thead className="table-dark">
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+      </tr>
+    </thead>
+    <tbody>
+      {driver.map(d => (
+        <tr key={d._id}>
+          <td>{d.name}</td>
+          <td>{d.email}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+)}
+
+{tab === "students" && (
+  <table className="table table-hover">
+    <thead className="table-dark">
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+      </tr>
+    </thead>
+    <tbody>
+      {student.map(s => (
+        <tr key={s._id}>
+          <td>{s.name}</td>
+          <td>{s.email}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+)}
+{tab === "buses" && (
+  <table className="table table-hover">
+    <thead className="table-dark">
+      <tr>
+        <th>Bus Number</th>
+        <th>Capacity</th>
+      </tr>
+    </thead>
+    <tbody>
+      {buses.map(bus => (
+        <tr key={bus._id}>
+          <td>{bus.busnumber}</td>
+          <td>{bus.capacity}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+)}
 
       {/* ⏳ PENDING */}
       {tab === "pending" && (

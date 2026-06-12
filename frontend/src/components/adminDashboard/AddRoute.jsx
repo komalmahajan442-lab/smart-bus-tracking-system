@@ -30,73 +30,32 @@ function RecenterMap({ lat, lng }) {
 /* ------------------ MAP CLICK PICKER ------------------ */
 function LocationPicker({ index, setStop }) {
   useMapEvents({
-    click(e) {
+    async click(e) {
       const { lat, lng } = e.latlng;
 
-      setStop(prev => {
-        const updated = [...prev];
-        updated[index] = {
-          ...updated[index],
-          latitude: lat,
-          longitude: lng
-        };
-        return updated;
-      });
-    }
-  });
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+        );
 
-  return null;
-}
+        const data = await res.json();
 
-function AddRoute() {
-  const { routes, fetchRoutes } = useContext(MyContext);
+        setStop(prev => {
+          const updated = [...prev];
 
-  const [Route, setRoute] = useState("");
-  const [stops, setStop] = useState([
-    { stopname: "", longitude: "", latitude: "" }
-  ]);
+          updated[index] = {
+            ...updated[index],
+            stopname: data.display_name?.split(",")[0] || "",
+            latitude: lat,
+            longitude: lng,
+            suggestions: []
+          };
 
-  const timeoutRef = useRef({});
+          return updated;
+        });
 
-  /* ------------------ STOP UPDATE ------------------ */
-  const handleStopChange = (index, field, value) => {
-    const updated = [...stops];
-    updated[index][field] = value;
-    setStop(updated);
-  };
-
-  const addstop = (e) => {
-    e.preventDefault();
-    setStop([...stops, { stopname: "", longitude: "", latitude: "" }]);
-  };
-
-  const handleremoveStop = (index) => {
-    if (!window.confirm("Remove this stop?")) return;
-    setStop(prev => prev.filter((_, i) => i !== index));
-  };
-
-  /* ------------------ GEO SEARCH FIX ------------------ */
-  const searchLocation = async (name, index) => {
-    try {
-      if (!name || name.length < 3) return;
-
-      // ✅ stronger location bias
-      const query = `${name}, Burhanpur, Madhya Pradesh, India`;
-
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
-      );
-
-      const data = await res.json();
-
-      if (data.length > 0) {
-        // ✅ best result pick
-        const best = data[0];
-
-        const lat = parseFloat(best.lat);
-        const lon = parseFloat(best.lon);
-
-        console.log("📍 Selected:", name, lat, lon);
+      } catch (err) {
+        console.log(err);
 
         setStop(prev => {
           const updated = [...prev];
@@ -104,16 +63,119 @@ function AddRoute() {
           updated[index] = {
             ...updated[index],
             latitude: lat,
-            longitude: lon
+            longitude: lng
           };
 
           return updated;
         });
       }
-    } catch (err) {
-      console.log(err);
     }
+  });
+
+  return null;
+}
+function AddRoute() {
+  const { routes, fetchRoutes } = useContext(MyContext);
+
+  const [Route, setRoute] = useState("");
+  const [stops, setStop] = useState([
+  {
+    stopname: "",
+    longitude: "",
+    latitude: "",
+    suggestions: []
+  }
+]);
+
+  const timeoutRef = useRef({});
+
+  /* ------------------ STOP UPDATE ------------------ */
+  const handleStopChange = (index, field, value) => {
+    setStop(prev => {
+  const updated = [...prev];
+  updated[index] = {
+    ...updated[index],
+    [field]: value
   };
+  return updated;
+});
+  };
+
+  const addstop = (e) => {
+    e.preventDefault();
+    setStop([
+  ...stops,
+  {
+    stopname: "",
+    longitude: "",
+    latitude: "",
+    suggestions: []
+  }
+]);
+  };
+
+  const handleremoveStop = (index) => {
+    if (!window.confirm("Remove this stop?")) return;
+    setStop(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const searchLocation = async (name, index) => {
+  try {
+
+    if (!name || name.trim().length < 3) {
+      setStop(prev => {
+        const updated = [...prev];
+
+        updated[index].suggestions = [];
+        updated[index].latitude = "";
+        updated[index].longitude = "";
+
+        return updated;
+      });
+
+      return;
+    }
+
+    const res = await fetch(
+  `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+    name
+  )}&limit=5`
+);
+
+    const data = await res.json();
+    console.log(data);
+
+    setStop(prev => {
+      const updated = [...prev];
+
+      updated[index].suggestions = data;
+
+      return updated;
+    });
+
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+const selectSuggestion = (index, place) => {
+
+  setStop(prev => {
+
+    const updated = [...prev];
+
+    updated[index] = {
+      ...updated[index],
+      stopname: place.display_name.split(",")[0],
+      latitude: place.lat,
+      longitude: place.lon,
+      suggestions: []
+    };
+
+    return updated;
+  });
+
+};
 
   /* ------------------ CREATE ROUTE ------------------ */
   const addStop = async () => {
@@ -163,7 +225,14 @@ function AddRoute() {
       toast.success(res.data.message);
       fetchRoutes();
 
-      setStop([{ stopname: "", longitude: "", latitude: "" }]);
+setStop([
+  {
+    stopname: "",
+    longitude: "",
+    latitude: "",
+    suggestions: []
+  }
+]);
       setRoute("");
     } catch (err) {
       toast.error(err.response?.data?.message || err.message);
@@ -198,8 +267,28 @@ function AddRoute() {
                   value={stop.stopname}
                   onChange={(e) => {
                     const value = e.target.value;
+if (!value.trim()) {
 
-                    handleStopChange(index, "stopname", value);
+  setStop(prev => {
+
+    const updated = [...prev];
+
+    updated[index] = {
+      ...updated[index],
+      stopname: "",
+      latitude: "",
+      longitude: "",
+      suggestions: []
+    };
+
+    return updated;
+  });
+
+} else {
+
+  handleStopChange(index, "stopname", value);
+
+}
 
                     clearTimeout(timeoutRef.current[index]);
 
@@ -208,6 +297,35 @@ function AddRoute() {
                     }, 700);
                   }}
                 />
+
+                {stop.suggestions?.length > 0 && (
+
+  <div
+    className="list-group mb-2"
+    style={{
+      maxHeight: "200px",
+      overflowY: "auto"
+    }}
+  >
+
+    {stop.suggestions.map(place => (
+
+      <button
+        key={place.place_id}
+        type="button"
+        className="list-group-item list-group-item-action"
+        onClick={() =>
+          selectSuggestion(index, place)
+        }
+      >
+        {place.display_name}
+      </button>
+
+    ))}
+
+  </div>
+
+)}
 
                 {/* MAP */}
                 <MapContainer
